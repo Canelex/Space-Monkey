@@ -17,14 +17,14 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 acc = Input.acceleration;
 
-        if (acc.z >= -maximumPitch && acc.z <= maximumPitch) // Check pitch. If the phone is flat, yaw cannot be calculated
+        // Check pitch. If the phone is flat, yaw cannot be calculated
+        if (acc.z >= -maximumPitch && acc.z <= maximumPitch)
         {
-            /*
-              When facing the screen in portrait mode, x is the horizontal vector
-              and y is the vertical vector. However, since this game is played in
-              landscape mode, they are switched. Yaw is the rotation of the device
-              calculated using these vectors.
-            */
+            /* When facing the screen in portrait mode, x is the horizontal vector
+            and y is the vertical vector. However, since this game is played in
+            landscape mode, they are switched. Yaw is the rotation of the device
+            calculated using these vectors. */
+
             float yaw = Mathf.Atan2(acc.x, -acc.y);
             if (yaw < -Mathf.PI) yaw += Mathf.PI * 2;
             if (yaw > Mathf.PI) yaw -= Mathf.PI * 2;
