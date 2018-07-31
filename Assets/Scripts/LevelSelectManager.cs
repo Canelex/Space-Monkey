@@ -15,6 +15,12 @@ public class LevelSelectManager : MonoBehaviour
     public Text overviewScore;
     private LevelSelectItem selected;
     private Image image;
+    private AudioSource asource;
+
+    void Start()
+    {
+        asource = GetComponent<AudioSource>();
+    }
 
     void Update()
     {
@@ -47,6 +53,11 @@ public class LevelSelectManager : MonoBehaviour
 
     public void SelectItem(LevelSelectItem item)
     {
+        if (item == selected)
+        {
+            return;
+        }
+
         DeselectCurrentItem();
 
         // Update selected item
@@ -58,6 +69,9 @@ public class LevelSelectManager : MonoBehaviour
         overviewTime.text = "--"; // TODO: Fetch
         overviewScore.text = "--"; // TODO: Fetch
         overview.gameObject.SetActive(true);
+
+        // Play selection sound
+        asource.Play();
     }
 
     public void StartSelected()
