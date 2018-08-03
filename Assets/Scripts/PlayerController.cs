@@ -9,10 +9,6 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Speed at which player will be rotated (smoothness)"), Range(0, 1)]
     public float rotateSpeed;
 
-    void Start()
-    {
-    }
-
     void Update()
     {
         Vector3 acc = Input.acceleration;

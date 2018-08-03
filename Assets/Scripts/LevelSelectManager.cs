@@ -9,12 +9,11 @@ public class LevelSelectManager : MonoBehaviour
 {
     public Sprite outlineSelectedSprite;
     public Sprite outlineUnselectedSprite;
-    public Image overview;
+    public GameObject overview;
     public Text overviewName;
     public Text overviewTime;
     public Text overviewScore;
     private LevelSelectItem selected;
-    private Image image;
     private AudioSource asource;
 
     void Start()
@@ -24,30 +23,24 @@ public class LevelSelectManager : MonoBehaviour
 
     void Update()
     {
-        // Deselect current item when you touch somewhere else in screen
-        if (Input.touchCount > 0)
+        if (Input.GetMouseButtonDown(0))
         {
-            foreach (Touch touch in Input.touches)
+            if (!IsPointerOverUI())
             {
-                if (touch.phase == TouchPhase.Began)
-                {
-                    if (!EventSystem.current.IsPointerOverGameObject(touch.fingerId))
-                    {
-                        DeselectCurrentItem();
-                        overview.gameObject.SetActive(false); // Hide level overview
-                    }
-                }
+                DeselectCurrentItem();
+                overview.SetActive(false);
             }
         }
     }
 
     private void DeselectCurrentItem()
     {
-        if (selected != null) // Is there a selected item already?
+        if (selected == null) // Is there no selected item currently?
         {
-            selected.GetComponent<Image>().sprite = outlineUnselectedSprite;
+            return;
         }
 
+        selected.GetComponent<Image>().sprite = outlineUnselectedSprite;
         selected = null;
     }
 
@@ -68,7 +61,7 @@ public class LevelSelectManager : MonoBehaviour
         overviewName.text = item.levelName;
         overviewTime.text = "--"; // TODO: Fetch
         overviewScore.text = "--"; // TODO: Fetch
-        overview.gameObject.SetActive(true);
+        overview.SetActive(true);
 
         // Play selection sound
         asource.Play();
@@ -81,5 +74,14 @@ public class LevelSelectManager : MonoBehaviour
             //TODO: Async with splash scren
             SceneManager.LoadScene(selected.levelIndex);
         }
+    }
+
+    private bool IsPointerOverUI()
+    {
+        PointerEventData data = new PointerEventData(EventSystem.current);
+        data.position = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(data, results);
+        return results.Count > 0;
     }
 }
