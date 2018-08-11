@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class Accelerometer
 {
-    private Vector3 acceleration;
-    private float tolerance;
+    public Vector3 acceleration;
+    public float tolerance;
 
     public Accelerometer(float tolerance)
     {
@@ -16,15 +16,13 @@ public class Accelerometer
     public void ReadInput()
     {
         acceleration = Input.acceleration;
-
-        Debug.Log(acceleration + ": " + Yaw() + ", " + Pitch() + ", " + Roll());
     }
 
     public float Yaw()
     {
         if (Mathf.Abs(acceleration.z) <= tolerance)
         {
-            return Normalize(Mathf.Atan2(acceleration.y, acceleration.x) * Mathf.Rad2Deg + 90);
+            return Normalize(Mathf.Atan2(acceleration.y, acceleration.x) * Mathf.Rad2Deg + 90F);
         }
 
         return 0;
@@ -44,7 +42,7 @@ public class Accelerometer
     {
         if (Mathf.Abs(acceleration.y) <= tolerance)
         {
-            return Normalize(-Mathf.Atan2(acceleration.z, acceleration.x) * Mathf.Rad2Deg);
+            return Normalize(Mathf.Atan2(acceleration.z, acceleration.x) * Mathf.Rad2Deg + 90F);
         }
 
         return 0;

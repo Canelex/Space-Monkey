@@ -32,19 +32,17 @@ public class PlayerController : MonoBehaviour
         float tiltRight = accelerometer.Yaw();
         float tiltBack = accelerometer.Pitch();
 
-        if (tiltBack >= 90 || (evading && tiltBack >= 75))
+        evading = accelerometer.acceleration.y > 0 && tiltBack >= 90;
+
+        if (!evading)
         {
-            tiltRight = 0;
-            evading = true;
-            sprite.color = new Color(1F, 1F, 1F, 0.5F);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, 0, tiltRight), rotateSpeed);
+            sprite.color = Color.white;
         }
         else
         {
-            evading = false;
-            sprite.color = Color.white;
+            sprite.color = new Color(1F, 1F, 1F, 0.5F);
         }
-
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, 0, tiltRight), rotateSpeed);
 
     }
 
