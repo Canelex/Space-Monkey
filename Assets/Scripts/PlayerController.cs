@@ -21,7 +21,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         sprite = GetComponent<SpriteRenderer>();
-        accelerometer = new Accelerometer(0.9F);
+        accelerometer = new Accelerometer(0.05F);
         InvokeRepeating("FireBullet", 1F, bulletRate);
     }
 
@@ -29,20 +29,23 @@ public class PlayerController : MonoBehaviour
     {
         // Wrapper takes accelerometer values and calculates tilts.
         accelerometer.ReadInput();
-        float tiltRight = accelerometer.Yaw();
-        float tiltBack = accelerometer.Pitch();
+        float yaw = accelerometer.Yaw();
+        float pitch = accelerometer.Pitch();
+        float roll = accelerometer.Roll();
 
-        evading = accelerometer.acceleration.y > 0 && tiltBack >= 90;
+        evading = pitch >= 85 && Mathf.Abs(roll) <= 45;
 
         if (!evading)
         {
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, 0, tiltRight), rotateSpeed);
             sprite.color = Color.white;
         }
         else
         {
             sprite.color = new Color(1F, 1F, 1F, 0.5F);
+            yaw = 0;
         }
+
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, 0, yaw), rotateSpeed);
 
     }
 

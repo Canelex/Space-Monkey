@@ -20,9 +20,9 @@ public class Accelerometer
 
     public float Yaw()
     {
-        if (Mathf.Abs(acceleration.z) <= tolerance)
+        if (Pythagorean(acceleration.x, acceleration.y) >= tolerance)
         {
-            return Normalize(Mathf.Atan2(acceleration.y, acceleration.x) * Mathf.Rad2Deg + 90F);
+            return Normalize(Mathf.Atan2(acceleration.x, -acceleration.y) * Mathf.Rad2Deg);
         }
 
         return 0;
@@ -30,9 +30,9 @@ public class Accelerometer
 
     public float Pitch()
     {
-        if (Mathf.Abs(acceleration.x) <= tolerance)
+        if (Pythagorean(acceleration.z, acceleration.y) >= tolerance)
         {
-            return Normalize(Mathf.Atan2(acceleration.z, acceleration.y) * Mathf.Rad2Deg + 180F);
+            return Normalize(Mathf.Atan2(-acceleration.z, -acceleration.y) * Mathf.Rad2Deg);
         }
 
         return 0;
@@ -40,9 +40,9 @@ public class Accelerometer
 
     public float Roll()
     {
-        if (Mathf.Abs(acceleration.y) <= tolerance)
+        if (Pythagorean(acceleration.z, acceleration.x) >= tolerance)
         {
-            return Normalize(Mathf.Atan2(acceleration.z, acceleration.x) * Mathf.Rad2Deg + 90F);
+            return Normalize(Mathf.Atan2(-acceleration.x, -acceleration.z) * Mathf.Rad2Deg);
         }
 
         return 0;
@@ -53,5 +53,10 @@ public class Accelerometer
         while (angle > 180) angle -= 360;
         while (angle < -180) angle += 360;
         return angle;
+    }
+
+    float Pythagorean(float a, float b)
+    {
+        return Mathf.Sqrt(a * a + b * b);
     }
 }
