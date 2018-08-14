@@ -5,8 +5,8 @@ using UnityEngine;
 public class GameController : MonoBehaviour
 {
     public int lives;
-    public float score;
-    public float time;
+    public int score;
+    public int time;
 
     void Start()
     {
@@ -15,6 +15,6 @@ public class GameController : MonoBehaviour
 
     void Update()
     {
-        
+        time = (int)Time.time;
     }
 }
