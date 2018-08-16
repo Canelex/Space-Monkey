@@ -33,7 +33,7 @@ public class PlayerController : MonoBehaviour
         float pitch = accelerometer.Pitch();
         float roll = accelerometer.Roll();
 
-        evading = pitch >= 85 && Mathf.Abs(roll) <= 45;
+        evading = pitch >= 66 && Mathf.Abs(roll) <= 45;
 
         if (!evading)
         {
