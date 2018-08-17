@@ -11,32 +11,20 @@ public class AsteroidController : MonoBehaviour
     void Start()
     {
         myRigidbody = GetComponent<Rigidbody2D>();
-
-        if (myRigidbody.velocity == Vector2.zero)
-        {
-            // Start flying in direction of player.
-            TargetPos(FindObjectOfType<PlayerController>().transform.position);
-        }
-    }
-
-    void Update()
-    {
     }
 
     void OnTriggerEnter2D(Collider2D coll)
     {
-        if (coll.gameObject.tag == "Bullet") // Hit by bullet
+        if (coll.tag == "Bullet") // Hit by bullet
         {
-            Rigidbody2D bullet = coll.gameObject.GetComponent<Rigidbody2D>();
-
-            if (child != null)
+            if (child != null) // If asteroid has smaller version, split.
             {
+                Rigidbody2D bullet = coll.GetComponent<Rigidbody2D>();
                 Split(bullet.velocity, 30, 5);
                 Split(bullet.velocity, -30, 5);
             }
 
-            Destroy(coll.gameObject);
-            Destroy(gameObject);
+            GameController.instance.AsteroidDestroyed(this, coll.gameObject);
         }
     }
 

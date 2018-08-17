@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [Tooltip("Speed at which player will be rotated (smoothness)"), Range(0, 1)]
-    public float rotateSpeed;
     [Tooltip("Prefab of bullet object")]
     public Rigidbody2D bulletPrefab;
     [Tooltip("Speed at which bullets are fired")]
@@ -14,9 +12,18 @@ public class PlayerController : MonoBehaviour
     public float bulletRate;
     [Tooltip("How many seconds after spawning are bullets deleted")]
     public float bulletLife;
-    private SpriteRenderer sprite;
+    private float minPitchEvade;
+    private float rotationSpeed;
+    public bool respawning;
+    public bool invulnerable;
+    public SpriteRenderer sprite;
     private Accelerometer accelerometer;
-    public bool evading;
+
+    void Awake()
+    {
+        minPitchEvade = PlayerPrefs.GetFloat("min-pitch-to-evade", Defaults.MIN_PITCH_TO_EVADE);
+        rotationSpeed = PlayerPrefs.GetFloat("rotation-speed", Defaults.ROTATION_SPEED);
+    }
 
     void Start()
     {
@@ -27,36 +34,50 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Wrapper takes accelerometer values and calculates tilts.
-        accelerometer.ReadInput();
-        float yaw = accelerometer.Yaw();
-        float pitch = accelerometer.Pitch();
-        float roll = accelerometer.Roll();
-
-        evading = pitch >= 66 && Mathf.Abs(roll) <= 45;
-
-        if (!evading)
+        if (!respawning)
         {
-            sprite.color = Color.white;
-        }
-        else
-        {
-            sprite.color = new Color(1F, 1F, 1F, 0.5F);
-            yaw = 0;
-        }
+            // Wrapper takes accelerometer values and calculates tilts.
+            accelerometer.ReadInput();
+            float yaw = accelerometer.Yaw();
+            float pitch = accelerometer.Pitch();
+            float roll = accelerometer.Roll();
 
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, 0, yaw), rotateSpeed);
+            if (pitch >= minPitchEvade && Mathf.Abs(roll) <= 45)
+            {
+                invulnerable = true;
+                sprite.color = new Color(1F, 1F, 1F, 0.5F); // Translucent.
+                yaw = 0;
+            }
+            else
+            {
+                invulnerable = false;
+                sprite.color = Color.white; // Not translucent.
+            }
 
+            // Rotate towards specified yaw (non-lineear).
+            Quaternion rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, 0, yaw), rotationSpeed);
+            transform.rotation = rotation;
+        }
     }
 
     void FireBullet()
     {
-        if (evading) return;
+        if (invulnerable) return;
 
         //TODO: Play bullet sound.
         Rigidbody2D bullet = Instantiate(bulletPrefab, transform.position, transform.rotation);
         bullet.velocity = transform.up * bulletSpeed;
         bullet.transform.position += transform.up * 1.5F;
         Destroy(bullet.gameObject, bulletLife);
+    }
+
+    void OnTriggerEnter2D(Collider2D coll)
+    {
+        if (invulnerable) return;
+
+        if (coll.tag == "Asteroid")
+        {
+            GameController.instance.PlayerDestroyed(this, coll.gameObject);
+        }
     }
 }
