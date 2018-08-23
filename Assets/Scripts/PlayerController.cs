@@ -4,26 +4,23 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [Tooltip("Prefab of bullet object")]
-    public Rigidbody2D bulletPrefab;
-    [Tooltip("Speed at which bullets are fired")]
+    [Tooltip("Length (seconds) of evade animation"), Range(0.05F, 1F)]
+    public float animationSpeed;
+    [Tooltip("Prefab of bullet object.")]
+    public Rigidbody2D bulletObj;
+    [Tooltip("Velocity of bullets fired.")]
     public float bulletSpeed;
-    [Tooltip("Rate at which bullets are fired")]
+    [Tooltip("Rate at which bullets are fired.")]
     public float bulletRate;
-    [Tooltip("How many seconds after spawning are bullets deleted")]
+    [Tooltip("Despawn time of bullets.")]
     public float bulletLife;
-    private float minPitchEvade;
-    private float rotationSpeed;
-    public bool respawning;
-    public bool invulnerable;
     public SpriteRenderer sprite;
     private Accelerometer accelerometer;
 
-    void Awake()
-    {
-        minPitchEvade = PlayerPrefs.GetFloat("min-pitch-to-evade", Defaults.MIN_PITCH_TO_EVADE);
-        rotationSpeed = PlayerPrefs.GetFloat("rotation-speed", Defaults.ROTATION_SPEED);
-    }
+    public bool isDead;
+    public bool isEvading;
+    private bool isAnimating;
+    private float animationTime;
 
     void Start()
     {
@@ -34,50 +31,90 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (!respawning)
+        if (CanUseControls())
         {
-            // Wrapper takes accelerometer values and calculates tilts.
-            accelerometer.ReadInput();
+            accelerometer.ReadInput(); // Wrapper takes accelerometer values and calculates tilts.
             float yaw = accelerometer.Yaw();
             float pitch = accelerometer.Pitch();
             float roll = accelerometer.Roll();
 
-            if (pitch >= minPitchEvade && Mathf.Abs(roll) <= 45)
+            float minPitch = isEvading ? 55 : 66; // If already evading, more intense tilt needed to stop.
+            if (pitch >= minPitch && Mathf.Abs(roll) <= 45F)
             {
-                invulnerable = true;
-                sprite.color = new Color(1F, 1F, 1F, 0.5F); // Translucent.
-                yaw = 0;
+                SetEvading(true);
+                yaw = 0F;
             }
             else
             {
-                invulnerable = false;
-                sprite.color = Color.white; // Not translucent.
+                SetEvading(false);
             }
 
-            // Rotate towards specified yaw (non-lineear).
-            Quaternion rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, 0, yaw), rotationSpeed);
-            transform.rotation = rotation;
+            if (isAnimating)
+            {
+                animationTime += Time.deltaTime / animationSpeed;
+
+                if (animationTime > 1)
+                {
+                    animationTime = 1;
+                    isAnimating = false;
+                }
+
+                float scaleXY = isEvading ? 1F - 0.2F * animationTime : 0.8F + 0.2F * animationTime;
+                transform.localScale = new Vector3(scaleXY, scaleXY, 1F);
+            }
+
+            transform.rotation = Quaternion.Euler(0, 0, yaw);
         }
     }
 
     void FireBullet()
     {
-        if (invulnerable) return;
-
-        //TODO: Play bullet sound.
-        Rigidbody2D bullet = Instantiate(bulletPrefab, transform.position, transform.rotation);
-        bullet.velocity = transform.up * bulletSpeed;
-        bullet.transform.position += transform.up * 1.5F;
-        Destroy(bullet.gameObject, bulletLife);
+        if (CanFireBullets())
+        {
+             //TODO: Play bullet sound.
+            Rigidbody2D bullet = Instantiate(bulletObj, transform.position, transform.rotation);
+            bullet.velocity = transform.up * bulletSpeed;
+            bullet.transform.position += transform.up * 1.5F;
+            Destroy(bullet.gameObject, bulletLife);
+        }
     }
 
     void OnTriggerEnter2D(Collider2D coll)
     {
-        if (invulnerable) return;
-
-        if (coll.tag == "Asteroid")
+        if (CanBeDestroyed())
         {
-            GameController.instance.PlayerDestroyed(this, coll.gameObject);
+            if (coll.tag == "Asteroid")
+            {
+                GameController.instance.PlayerDestroyed(coll.gameObject);
+            }
         }
     }
+
+    private void SetEvading(bool evading)
+    {
+        if (evading != isEvading) // Started now.
+        {
+            isAnimating = true;
+            animationTime = 0F;
+        }
+
+        sprite.sortingLayerName = evading ? "Player Down" : "Player Up"; 
+        isEvading = evading;
+    }
+
+    public bool CanUseControls()
+    {
+        return !isDead;
+    }
+
+    public bool CanBeDestroyed()
+    {
+        return !isDead && (!isEvading || isAnimating);
+    }
+
+    public bool CanFireBullets()
+    {
+        return !isDead && !isEvading;
+    }
+
 }

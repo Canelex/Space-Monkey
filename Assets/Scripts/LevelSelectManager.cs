@@ -35,36 +35,55 @@ public class LevelSelectManager : MonoBehaviour
 
     private void DeselectCurrentItem()
     {
-        if (selected == null) // Is there no selected item currently?
+        if (selected != null) // Is there a selected item currently?
         {
-            return;
+            selected.GetComponent<Image>().sprite = outlineUnselectedSprite;
+            selected = null;
         }
-
-        selected.GetComponent<Image>().sprite = outlineUnselectedSprite;
-        selected = null;
     }
 
     public void SelectItem(LevelSelectItem item)
     {
-        if (item == selected)
+        if (item != selected)
         {
-            return;
+            DeselectCurrentItem();
+
+            // Update selected item
+            selected = item;
+            selected.GetComponent<Image>().sprite = outlineSelectedSprite;
+
+            // Update overview board
+            overviewName.text = item.levelName;
+            
+            // Update best time
+            int time = PlayerPrefs.GetInt("best-time-level" + item.levelIndex, -1);
+            if (time != -1)
+            {
+                string minutes = (time / 60).ToString();
+                string seconds = (time % 60).ToString("00");
+                overviewTime.text = string.Format("{0}:{1}", minutes, seconds); // Update timer count.
+            }
+            else
+            {
+                overviewTime.text = "--";
+            }
+            
+            // Update high score
+            int score = PlayerPrefs.GetInt("high-score-level" + item.levelIndex, -1);
+            if (score != -1)
+            {
+                overviewScore.text = score.ToString();
+            }
+            else
+            {
+                overviewScore.text = "--";
+            }
+            
+            overview.SetActive(true);
+
+            // Play selection sound
+            asource.Play();
         }
-
-        DeselectCurrentItem();
-
-        // Update selected item
-        selected = item;
-        selected.GetComponent<Image>().sprite = outlineSelectedSprite;
-
-        // Update overview board
-        overviewName.text = item.levelName;
-        overviewTime.text = "--"; // TODO: Fetch
-        overviewScore.text = "--"; // TODO: Fetch
-        overview.SetActive(true);
-
-        // Play selection sound
-        asource.Play();
     }
 
     public void StartSelected()
