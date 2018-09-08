@@ -8,7 +8,6 @@ public class GameController : MonoBehaviour
 {
     public static GameController instance;
     private bool gameOver;
-    private float percentFade;
     public int lives;
     public int score;
     public int time;
@@ -30,6 +29,8 @@ public class GameController : MonoBehaviour
     void Start()
     {
         player = FindObjectOfType<PlayerController>();
+
+        // Setup camera bounds for asteroid wrapping and more.
         float height = Camera.main.orthographicSize;
         float width = Camera.main.aspect * height;
         cameraBounds = new Vector2(width, height);
@@ -45,7 +46,7 @@ public class GameController : MonoBehaviour
                 time = thisTime;
                 string minutes = (time / 60).ToString();
                 string seconds = (time % 60).ToString("00");
-                textTime.text = string.Format("{0}:{1}", minutes, seconds); // Update timer count.
+                textTime.text = string.Format("{0}:{1}", minutes, seconds); // Update timer text.
             }
 
             if (!player.isDead) // Asteroids stay out of bounds when player respawning.
@@ -71,6 +72,7 @@ public class GameController : MonoBehaviour
                 {
                     // Victory
                     gameOver = true;
+                    Destroy(player.gameObject); // No more player.
                     canvasGame.SetActive(false);
                     canvasVictory.SetActive(true);
 
@@ -98,11 +100,10 @@ public class GameController : MonoBehaviour
 
     public void PlayerDestroyed(GameObject destroyer)
     {
-        player.isDead = true;
+        player.SetDead(true);
 
-        if (lives > 1)
+        if (lives > 1) // Has lives?
         {
-            player.sprite.color = new Color(1F, 1F, 1F, 0.25F); // temp
             lives--;
             textLives.text = "x" + lives;
             Invoke("RespawnPlayer", 3F);
@@ -110,23 +111,22 @@ public class GameController : MonoBehaviour
         else
         {
             gameOver = true;
-            Destroy(player.gameObject); // Bye bye player.
+            Destroy(player.gameObject); // No more player.
             canvasGame.SetActive(false);
             canvasDefeat.SetActive(true);
         }
 
-        // TODO: Some kind of effect
-        GameObject go = Instantiate(asteroidCrumbs, destroyer.transform.position, destroyer.transform.rotation);
-        Destroy(go, 1F);
+        if (destroyer.tag == "Asteroid")
+        {
+            CreateExplosionEffect(destroyer.transform.position); // Asteroid chunks.
+        }
+        
         Destroy(destroyer); // Asteroid(?) gets deleted.
     }
 
     public void AsteroidDestroyed(AsteroidController asteroid, GameObject destroyer)
     {
-        // TODO: some kind of explosion effect.
-        GameObject go = Instantiate(asteroidCrumbs, asteroid.transform.position, asteroid.transform.rotation);
-        Destroy(go, 1F);
-
+        CreateExplosionEffect(asteroid.transform.position); // Asteroid chunks.
         score += 10;
         textScore.text = score.ToString("000");
         Destroy(asteroid.gameObject); // Asteroid gets deleted.
@@ -135,8 +135,15 @@ public class GameController : MonoBehaviour
 
     void RespawnPlayer()
     {
-        player.isDead = false;
-        player.sprite.color = Color.white;
+        // TODO: Some kind of respawn effect maybe?
+        player.SetDead(false);
+    }
+
+    void CreateExplosionEffect(Vector3 position)
+    {
+        // Create particle system and then destroy it after 1s.
+        GameObject explosion = Instantiate(asteroidCrumbs, position, Quaternion.identity);
+        Destroy(explosion, 1.0F);
     }
 
     Vector2 GetBoundsForObject(GameObject go)

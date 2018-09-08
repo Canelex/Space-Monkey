@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Tooltip("Length (seconds) of evade animation"), Range(0.05F, 1F)]
-    public float animationSpeed;
+    public float animationLength;
     [Tooltip("Prefab of bullet object.")]
     public Rigidbody2D bulletObj;
     [Tooltip("Velocity of bullets fired.")]
@@ -37,33 +37,30 @@ public class PlayerController : MonoBehaviour
             float yaw = accelerometer.Yaw();
             float pitch = accelerometer.Pitch();
             float roll = accelerometer.Roll();
-
             float minPitch = isEvading ? 55 : 66; // If already evading, more intense tilt needed to stop.
             if (pitch >= minPitch && Mathf.Abs(roll) <= 45F)
             {
                 SetEvading(true);
-                yaw = 0F;
             }
             else
             {
                 SetEvading(false);
+                transform.rotation = Quaternion.Euler(0, 0, yaw); // Rotate player to match device yaw.
             }
 
             if (isAnimating)
             {
-                animationTime += Time.deltaTime / animationSpeed;
+                animationTime += Time.deltaTime;
 
-                if (animationTime > 1)
+                if (animationTime > animationLength)
                 {
-                    animationTime = 1;
-                    isAnimating = false;
+                    isAnimating = false; // Animation is finished.
                 }
 
-                float scaleXY = isEvading ? 1F - 0.2F * animationTime : 0.8F + 0.2F * animationTime;
-                transform.localScale = new Vector3(scaleXY, scaleXY, 1F);
+                float ap = Mathf.Min(animationTime, animationLength) / animationLength; // [0 - 1];\
+                float scale = isEvading ? 1F - 0.2F * ap : 0.8F + 0.2F * ap; // If evading, 1.0->0.8. Otherwise, 0.8->1.0
+                transform.localScale = new Vector3(scale, scale, 1F);
             }
-
-            transform.rotation = Quaternion.Euler(0, 0, yaw);
         }
     }
 
@@ -71,7 +68,7 @@ public class PlayerController : MonoBehaviour
     {
         if (CanFireBullets())
         {
-             //TODO: Play bullet sound.
+            //TODO: Play bullet sound.
             Rigidbody2D bullet = Instantiate(bulletObj, transform.position, transform.rotation);
             bullet.velocity = transform.up * bulletSpeed;
             bullet.transform.position += transform.up * 1.5F;
@@ -90,7 +87,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void SetEvading(bool evading)
+    public void SetDead(bool dead)
+    {
+        isDead = dead;
+        sprite.color = isDead ? new Color(1F, 1F, 1F, 0.25F) : Color.white;
+    }
+
+    public void SetEvading(bool evading)
     {
         if (evading != isEvading) // Started now.
         {
@@ -98,7 +101,7 @@ public class PlayerController : MonoBehaviour
             animationTime = 0F;
         }
 
-        sprite.sortingLayerName = evading ? "Player Down" : "Player Up"; 
+        sprite.sortingLayerName = evading ? "Player Down" : "Player Up"; // Render either above/below asteroids. 
         isEvading = evading;
     }
 
